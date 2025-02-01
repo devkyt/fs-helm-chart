@@ -1,6 +1,3 @@
-# Description
-Custom Helm Chart to deploy file storage app on Kubernete cluster.
-
 ## How to
 In case of any changes to Helm Chart ensure it is still valid and ready to go:
 ```shell
