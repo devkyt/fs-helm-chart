@@ -1,4 +1,4 @@
-## How to
+## What to do with it
 In case of any changes to Helm Chart ensure it is still valid and ready to go:
 ```shell
 helm lint .
@@ -16,7 +16,7 @@ Delete chart from cluster:
 helm unistall fs-app --namespace fs
 ```
 
-## Test
+## How to Test
 Map to the service port:
 ```shell
 kubectl port-forward -n fs svc/fs-app-svc 8080:8081
