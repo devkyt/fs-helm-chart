@@ -6,14 +6,19 @@ helm template .
 helm install --dry-run fs-app .
 ```
 
-Install chart to cluster:
+Deploy app to cluster:
 ```shell
 helm upgrade --install fs-app . --namespace fs --create-namespace
 ```
 
-Delete chart from cluster:
+Upgrade app:
 ```
-helm unistall fs-app --namespace fs
+helm upgrade fs-app . --namespace fs
+```
+
+Delete app from cluster:
+```
+helm uninstall fs-app --namespace fs
 ```
 
 ## How to Test
