@@ -1,0 +1,94 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "{{ .Release.Name }}"
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "common.labels" . | indent 4 }}
+spec:
+  replicas: {{ .Values.replicas | default 1 }}
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+  strategy:
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}
+    spec:
+      serviceAccountName: "{{ .Release.Name }}-account"
+      terminationGracePeriodSeconds: 15
+      containers:
+        - name: "{{ .Values.proxy.containerName }}"
+          image: "{{ .Values.proxy.image.repo }}:{{ .Values.proxy.image.tag }}"
+          imagePullPolicy: {{ .Values.proxy.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.proxy.port | default 8081 }}
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/conf.d
+            - name: storage
+              mountPath: {{ .Values.storage.mountPoint | quote }}
+          resources: {{- include "proxy.resources" . | nindent 12 }}
+          securityContext:
+            runAsUser: 101
+            runAsGroup: 101
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 5
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 5
+            failureThreshold: 5
+        - name: "{{ .Values.app.containerName }}"
+          image: "{{ .Values.app.image.repo }}:{{ .Values.app.image.tag }}"
+          imagePullPolicy: {{ .Values.app.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.app.port | default 8080 }}
+          env:
+            - name: UPLOAD_FOLDER
+              value: {{ .Values.storage.mountPoint | quote }}
+          volumeMounts:
+            - name: storage
+              mountPath: {{ .Values.storage.mountPoint | quote }}
+            {{- if .Values.storage.persistMetadata }}
+            - name: metadata
+              mountPath: "/app/data"
+            {{- end }}
+          resources: {{- include "app.resources" . | nindent 12 }}
+          command: ["/bin/sh", "-c"]
+          args:
+              - "sed -i 's/CREATE TABLE/CREATE TABLE IF NOT EXISTS/g' app.py &&
+                 sed -i 's/os.chmod(file_path, 0o660)/os.chmod(file_path, 0o755)/g' app.py &&
+                 python app.py"
+          livenessProbe:
+            exec:
+              command:
+                - ls
+                - {{ .Values.storage.mountPoint | quote }}
+            initialDelaySeconds: 20
+            periodSeconds: 5
+            failureThreshold: 5
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: "{{ .Release.Name }}-nginx-config"
+        - name: storage
+          persistentVolumeClaim:
+            claimName: "{{ .Release.Name }}-pvc"
+        {{- if .Values.storage.persistMetadata }}
+        - name: metadata
+          persistentVolumeClaim:
+            claimName: "{{ .Release.Name }}-db-pvc"
+        {{- end }}

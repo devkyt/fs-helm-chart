@@ -1,0 +1,9 @@
+apiVersion: v2
+name: file-storage
+description: File Storage Chart
+type: application
+version: "0.1"
+appVersion: "0.1"
+maintainers:
+  - name: Kyrylo Tykhanskyi
+    email: ktykhanskyi@gmail.com
