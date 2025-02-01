@@ -3,7 +3,7 @@ In case of any changes to Helm Chart ensure it is still valid and ready to go:
 ```shell
 helm lint .
 helm template .
-helm install --dry-run file-storage-app .
+helm install --dry-run fs-app .
 ```
 
 Install chart to cluster:

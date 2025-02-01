@@ -1,5 +1,5 @@
 apiVersion: v2
-name: file-storage
+name: fs-app
 description: File Storage Chart
 type: application
 version: "0.1"
